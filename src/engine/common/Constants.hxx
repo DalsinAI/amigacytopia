@@ -7,6 +7,9 @@ const std::string CYTOPIA_DATA_DIR_BASE(getenv("XDG_DATA_HOME") == nullptr ? get
                                                                            : getenv("XDG_DATA_HOME"));
 #elif _WIN32
 const std::string CYTOPIA_DATA_DIR_BASE = getenv("APPDATA");
+#elif defined(__amigaos__)
+// GFOS: the player's settings and saved games live in the game's drawer.
+const std::string CYTOPIA_DATA_DIR_BASE = "PROGDIR:User";
 #elif __APPLE__
 const std::string CYTOPIA_DATA_DIR_BASE = getenv("HOME") + (std::string) "/Library/Application Support";
 #else

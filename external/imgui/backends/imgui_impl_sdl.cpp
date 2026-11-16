@@ -539,7 +539,13 @@ void ImGui_ImplSDL2_NewFrame()
     if (bd->Renderer != NULL)
         SDL_GetRendererOutputSize(bd->Renderer, &display_w, &display_h);
     else
+#if defined(__amigaos__)
+        // GFOS: Cytopia always draws through an SDL_Renderer; keeping
+        // SDL_GL_ out of the link keeps GL.module (Mesa) out of the game.
+        display_w = w, display_h = h;
+#else
         SDL_GL_GetDrawableSize(bd->Window, &display_w, &display_h);
+#endif
     io.DisplaySize = ImVec2((float)w, (float)h);
     if (w > 0 && h > 0)
         io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);

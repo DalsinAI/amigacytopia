@@ -4,7 +4,7 @@
 #include "SDL.h"
 
 #if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__OpenBSD__) && !defined(__vita__) && !defined(__SWITCH__) &&         \
-    !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__EMSCRIPTEN__)
+    !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__EMSCRIPTEN__) && !defined(__amigaos__)
 
 #include <execinfo.h>
 #include <signal.h>

@@ -1,0 +1,19 @@
+{
+  "name": "Cytopia",
+  "version": "0.4-gfos1",
+  "drawer": "Cytopia",
+  "program": "Cytopia",
+  "cpu": "68040",
+  "fpu": true,
+  "space": 14000000,
+  "modules": [
+    "SDL2.module",
+    "SDL2_image.module"
+  ],
+  "keep": [
+    "User"
+  ],
+  "parent": "Work:Games",
+  "badge": "icons/art/cytopia.png",
+  "script": "Install-Cytopia"
+}
