@@ -1,0 +1,131 @@
+# Cytopia for GFOS (AmigaOS 3.2 with GFOpenUp), 68040/68060 + FPU, on
+# GFOpenGPU's SDL 2 kit (LIBS:GFOpenGPU/SDL2.module, SDL2_image.module;
+# SDL2_ttf linked in) and z.library.
+#
+#   make -f amiga/Makefile.amigaos -j4 [STOVE=/path/to/os32-gcc16-open6]
+#
+# The sources of upstream's src/CMakeLists.txt without audio (OpenAL) or
+# AngelScript, as upstream builds when it finds neither, and Dear ImGui
+# from external/imgui. amiga/noise is this port's own version of the five
+# libnoise modules the terrain generator uses; amiga/zlib.h puts zlib's
+# names on z.library (amiga/zsdk, gfopensdk's z.library SDK).
+#
+# Output: build/amigaos/Cytopia/ (the drawer), its .info and
+# Install-Cytopia beside it.
+
+STOVE   ?= $(HOME)/AmiCradle/stoves/os32-gcc16-open6
+PREFIX  ?= $(STOVE)/prefix
+KIT     ?= $(PREFIX)/m68k-amigaos
+CC      = $(PREFIX)/bin/m68k-amigaos-gcc
+CXX     = $(PREFIX)/bin/m68k-amigaos-g++
+STRIP   = $(PREFIX)/bin/m68k-amigaos-strip
+# SDL is hard float: the FPU calling convention must match.
+CPU     ?= -m68040 -m68881
+# -fno-tree-loop-distribute-patterns: GCC 16's loop miscompile.
+OPT     ?= -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns
+
+DEFS    = -D__amigaos__ -DVERSION='"Cytopia 0.4 - Utilities Update"'
+# amiga/ first: its zlib.h stands in for zlib's.
+INC     = -Iamiga -Iamiga/noise -Iamiga/zsdk -Isrc -Iexternal/header_only \
+          -Isrc/engine -Isrc/engine/basics -Isrc/engine/common -Isrc/engine/GameObjects \
+          -Isrc/engine/map -Isrc/engine/ui/basics -Isrc/engine/ui/widgets \
+          -Isrc/engine/ui/menuGroups -Isrc/util -Isrc/services -Isrc/game -Isrc/game/ui \
+          -Iexternal/imgui -Iexternal/imgui/backends \
+          -I$(KIT)/include/SDL2 -I$(KIT)/include
+CXXFLAGS = -noixemul $(OPT) $(CPU) -std=gnu++17 -w $(DEFS) $(INC)
+LDFLAGS = -noixemul $(CPU)
+LIBS    = -L$(KIT)/lib -lSDL2_ttf -lSDL2_image -lSDL2 -lpthread -latomic -lm
+
+BUILD   = build/amigaos
+OBJDIR  = $(BUILD)/obj
+NAME    = Cytopia
+OUT     = $(BUILD)/$(NAME)
+PROG    = Cytopia
+
+SRC     = src/main.cxx \
+          src/Game.cxx \
+          src/MainMenu.cxx \
+          src/util/LOG.cxx \
+          src/util/Filesystem.cxx \
+          src/util/Exception.cxx \
+          src/util/OSystem.cxx \
+          src/services/Randomizer.cxx \
+          src/services/GameClock.cxx \
+          src/services/ResourceManager.cxx \
+          src/engine/basics/Camera.cxx \
+          src/engine/basics/isoMath.cxx \
+          src/engine/basics/mapEdit.cxx \
+          src/engine/basics/PointFunctions.cxx \
+          src/engine/basics/Settings.cxx \
+          src/engine/basics/GameStates.cxx \
+          src/engine/basics/utils.cxx \
+          src/engine/GameObjects/MapNode.cxx \
+          src/engine/map/MapFunctions.cxx \
+          src/engine/map/MapLayers.cxx \
+          src/engine/map/TerrainGenerator.cxx \
+          src/engine/EventManager.cxx \
+          src/engine/Map.cxx \
+          src/engine/Sprite.cxx \
+          src/engine/ResourcesManager.cxx \
+          src/engine/TileManager.cxx \
+          src/engine/UIManager.cxx \
+          src/engine/WindowManager.cxx \
+          src/game/ZoneArea.cxx \
+          src/game/ZoneManager.cxx \
+          src/game/PowerManager.cxx \
+          src/game/PowerGrid.cxx \
+          src/game/GamePlay.cxx \
+          src/game/ui/SettingsMenu.cxx \
+          src/game/ui/PauseMenu.cxx \
+          src/game/ui/LoadMenu.cxx \
+          src/game/ui/BuildMenu.cxx \
+          src/game/ui/GameTimeMenu.cxx \
+          src/util/desktop/Filesystem.cxx \
+          external/imgui/imgui.cpp external/imgui/imgui_draw.cpp \
+          external/imgui/imgui_tables.cpp external/imgui/imgui_widgets.cpp \
+          external/imgui/backends/imgui_impl_sdl.cpp \
+          external/imgui/backends/imgui_impl_sdlrenderer.cpp \
+          amiga/noise/noise.cxx amiga/amiga_start.cxx
+OBJS    = $(patsubst %.cpp,$(OBJDIR)/%.o,$(patsubst %.cxx,$(OBJDIR)/%.o,$(SRC)))
+
+all: $(OUT)/$(PROG) package
+
+$(BUILD)/$(PROG).debug: $(OBJS)
+	@mkdir -p $(BUILD)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+$(OUT)/$(PROG): $(BUILD)/$(PROG).debug
+	@mkdir -p $(OUT)
+	$(STRIP) -o $@ $<
+
+# The game's resources without audio/ (this build has no sound: upstream
+# plays music and effects through OpenAL only).
+package: $(OUT)/$(PROG) AMIGA_PORT.md README.md license.txt credits.txt
+	mkdir -p $(OUT)/User $(OUT)/resources
+	rm -rf $(OUT)/resources/*
+	cp -R data/resources/data data/resources/fonts data/resources/images \
+	      data/resources/settings.json $(OUT)/resources/
+	cp -R data/languages $(OUT)/
+	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp README.md $(OUT)/ReadMe-Cytopia
+	cp credits.txt $(OUT)/Credits
+	cp license.txt $(OUT)/COPYING.txt
+	cp amiga/icons/$(PROG).info amiga/icons/ReadMe.info $(OUT)/
+	for f in ReadMe-Cytopia Credits COPYING.txt; do \
+	    cp amiga/icons/ReadMe.info $(OUT)/$$f.info; done
+	cp amiga/icons/Data.info $(OUT)/User.info
+	cp amiga/icons/$(NAME)-drawer.info $(BUILD)/$(NAME).info
+	cp amiga/Install-$(NAME) amiga/Install-$(NAME).info $(BUILD)/
+
+$(OBJDIR)/%.o: %.cxx
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+clean:
+	rm -rf $(BUILD)
+
+.PHONY: all package clean
