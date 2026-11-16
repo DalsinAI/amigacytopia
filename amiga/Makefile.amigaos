@@ -32,7 +32,9 @@ INC     = -Iamiga -Iamiga/noise -Iamiga/zsdk -Isrc -Iexternal/header_only \
           -Isrc/engine/ui/menuGroups -Isrc/util -Isrc/services -Isrc/game -Isrc/game/ui \
           -Iexternal/imgui -Iexternal/imgui/backends \
           -I$(KIT)/include/SDL2 -I$(KIT)/include
-CXXFLAGS = -noixemul $(OPT) $(CPU) -std=gnu++17 -w $(DEFS) $(INC)
+# amiga_c99.hxx before everything (libnix has no strtoll and friends);
+# src/ files also get phc.hxx, the header upstream precompiles into each.
+CXXFLAGS = -noixemul $(OPT) $(CPU) -std=gnu++17 -w $(DEFS) $(INC) -include amiga/amiga_c99.hxx
 LDFLAGS = -noixemul $(CPU)
 LIBS    = -L$(KIT)/lib -lSDL2_ttf -lSDL2_image -lSDL2 -lpthread -latomic -lm
 
@@ -116,6 +118,10 @@ package: $(OUT)/$(PROG) AMIGA_PORT.md README.md license.txt credits.txt
 	cp amiga/icons/Data.info $(OUT)/User.info
 	cp amiga/icons/$(NAME)-drawer.info $(BUILD)/$(NAME).info
 	cp amiga/Install-$(NAME) amiga/Install-$(NAME).info $(BUILD)/
+
+$(OBJDIR)/src/%.o: src/%.cxx
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -include src/phc.hxx -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cxx
 	@mkdir -p $(dir $@)

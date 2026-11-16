@@ -17,6 +17,9 @@ constexpr const char *CYTOPIA_PLATFORM_NAME = "freebsd";
 #define CYTOPIA_PLATFORM_BEOS
 #define CYTOPIA_PLATFORM_HAIKU
 constexpr const char *CYTOPIA_PLATFORM_NAME = "haiku";
+#elif defined(__amigaos__)
+#define CYTOPIA_PLATFORM_AMIGA
+constexpr const char *CYTOPIA_PLATFORM_NAME = "amigaos";
 #elif defined(ANDROID)
 #define CYTOPIA_PLATFORM_UNIX
 #define CYTOPIA_PLATFORM_ANDROID
