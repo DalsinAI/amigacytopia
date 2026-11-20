@@ -11,10 +11,13 @@ jobs:
     # local runner; fork PRs never run on it
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, lumavault]
-    container: node:22-bookworm
 
     steps:
       - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Check if images exist
         run: node ./tools/CI/check-jsons.js
