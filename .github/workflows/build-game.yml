@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   build-msvc:
     name: Windows
+    # no Windows or macOS jobs for now (Dale, 20 Nov 2026); back on bigguy once its build images exist
+    if: false
     env:
       BUILD_TOOLS_PATH: C:\apps\build-tools\
     runs-on: windows-latest
@@ -58,10 +60,22 @@ jobs:
 
   build-gcc:
     name: Linux
+    # org runner (bigguy, one fresh container per job); fork PRs never run on it
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     env:
       CONAN_SYSREQUIRES_MODE: "enabled"
-    runs-on: ubuntu-latest
+      DEBIAN_FRONTEND: noninteractive
+    runs-on: [self-hosted, lumavault]
     steps:
+      - name: Container tools
+        timeout-minutes: 15
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          S=$([ "$(id -u)" = 0 ] || echo sudo)
+          $S apt-get update
+          $S apt-get install -y --no-install-recommends -o Dpkg::Options::=--force-confold curl ca-certificates git xvfb xauth python3 python3-pip python3-venv build-essential
+
       - uses: actions/checkout@v7
         with:
           submodules: true
