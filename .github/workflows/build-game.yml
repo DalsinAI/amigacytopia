@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   build-msvc:
     name: Windows
+    # no Windows or macOS jobs for now (Dale, 20 Nov 2026); back on bigguy once its build images exist
+    if: false
     env:
       BUILD_TOOLS_PATH: C:\apps\build-tools\
     runs-on: windows-latest
