@@ -63,7 +63,7 @@ jobs:
     env:
       CONAN_SYSREQUIRES_MODE: "enabled"
       DEBIAN_FRONTEND: noninteractive
-    runs-on: [self-hosted, Linux, X64, amigagfosports]
+    runs-on: [self-hosted, lumavault]
     container: ubuntu:24.04
     steps:
       - name: Container tools
